@@ -4,7 +4,7 @@
 		"name": "Truyện Dịch AI",
 		"site": "https://truyendichai.com",
 		"lang": "Tiếng Việt",
-		"version": "1.0.9",
+		"version": "1.0.10",
 		"url": "https://raw.githubusercontent.com/dev4f/lnreader-plugins/plugins/v3.0.0/.js/src/plugins/vietnamese/truyendichai.js",
 		"iconUrl": "https://raw.githubusercontent.com/dev4f/lnreader-plugins/plugins/v3.0.0/public/static/src/vi/truyendichai/icon.png"
 	}

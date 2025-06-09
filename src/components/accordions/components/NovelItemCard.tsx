@@ -14,20 +14,6 @@ import PathItem from '@components/PathItem';
 export default function NovelItemCard({ item }: { item: Plugin.NovelItem }) {
   return (
     <Box sx={{ display: 'flex', p: 1 }}>
-      <CardContent>
-        <Typography>Summary</Typography>
-        <Typography
-          sx={{
-            overflowY: 'auto',
-            height: 300,
-            p: 2,
-            borderRadius: 2,
-            backgroundColor: 'rgba(0,0,0,0.1)',
-          }}
-        >
-          {item.name}
-        </Typography>
-      </CardContent>
       <CopiableItem content={item.cover}>
         <Tooltip title={item.cover}>
           <CardMedia

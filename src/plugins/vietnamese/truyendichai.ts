@@ -7,7 +7,7 @@ class TruyenDichAI implements Plugin.PagePlugin {
   name = 'Truyện Dịch AI';
   icon = 'src/vi/truyendichai/icon.png';
   site = 'https://truyendichai.com';
-  version = '1.0.9';
+  version = '1.0.10';
 
   parseNovels(loadedCheerio: CheerioAPI) {
     const novels: Plugin.NovelItem[] = [];
@@ -33,13 +33,13 @@ class TruyenDichAI implements Plugin.PagePlugin {
       for (let i = novels.length; i < 20; i++) {
         novels.push({
           name: 'Truyện mới cập nhật',
-          cover: 'https://truyendichai.com/assets/images/no-cover.png',
+          cover: '',
           path: '',
         });
       }
     }
 
-    console.log(novels);
+    console.log('novels: ', novels);
     return novels;
   }
 
@@ -48,15 +48,8 @@ class TruyenDichAI implements Plugin.PagePlugin {
     const result = await fetchApi(url);
     const body = await result.text();
     const loadedCheerio = parseHTML(body);
-    console.log(body);
+    console.log('popular novels html: ', body);
     return this.parseNovels(loadedCheerio);
-  }
-
-  async loadHtml(pageNo: number): Promise<string> {
-    const url = `${this.site}/tim-truyen?page=${pageNo}`;
-    const result = await fetchApi(url);
-    const body = await result.text();
-    return body;
   }
 
   async searchNovels(
@@ -68,7 +61,7 @@ class TruyenDichAI implements Plugin.PagePlugin {
     const result = await fetchApi(searchUrl);
     const body = await result.text();
     const loadedCheerio = parseHTML(body);
-    console.log(body);
+    console.log('searching novels html: ', body);
     return this.parseNovels(loadedCheerio);
   }
 
@@ -76,10 +69,9 @@ class TruyenDichAI implements Plugin.PagePlugin {
     novelPath: string,
   ): Promise<Plugin.SourceNovel & { totalPages: number }> {
     const url = this.site + novelPath;
-    console.log('novel url', url);
     const result = await fetchApi(url);
     const body = await result.text();
-    console.log(body);
+    console.log('parse novel', url, body);
     const loadedCheerio = parseHTML(body);
 
     const cover = loadedCheerio('.main .nh-section .nh-thumb img')
@@ -99,9 +91,10 @@ class TruyenDichAI implements Plugin.PagePlugin {
       .attr('id')
       ?.replace('tab-', '');
     const getChapterUrl = `${url}/tab_content/${soureName}`;
-    console.log(getChapterUrl);
+    console.log('chapter url: ', getChapterUrl);
     const chapterResponse = await fetchApi(getChapterUrl);
     const chappterListRes = await chapterResponse.json();
+    console.log('chapter list response: ', chappterListRes);
     const chappterList: Array<any> = chappterListRes.data;
 
     const chapters: Plugin.ChapterItem[] = [];
@@ -122,6 +115,7 @@ class TruyenDichAI implements Plugin.PagePlugin {
       chapters: chapters,
       totalPages: 1,
     };
+    console.log('parsed novel: ', novel);
     return novel;
   }
 
@@ -129,10 +123,12 @@ class TruyenDichAI implements Plugin.PagePlugin {
     const url = this.site + novelPath;
     const result = await fetchApi(url);
     const body = await result.text();
+    console.log('parse page: ', url, body);
     const loadedCheerio = parseHTML(body);
-    const soureName = loadedCheerio('#chapter-list .chap-list.tab-pane')
+    const soureName = loadedCheerio('.chap-tab')
       .first()
-      .attr('id');
+      .attr('id')
+      ?.replace('tab-', '');
     const getChapterUrl = `${url}/tab_content/${soureName}`;
     const chapterResponse = await fetchApi(getChapterUrl);
     const chappterListRes = await chapterResponse.json();
@@ -146,6 +142,7 @@ class TruyenDichAI implements Plugin.PagePlugin {
         chapterNumber: idx + 1,
       });
     });
+    console.log('parsed chapters: ', chapters);
     return {
       chapters: chapters,
     };
@@ -157,20 +154,19 @@ class TruyenDichAI implements Plugin.PagePlugin {
     const body = await result.text();
     const loadedCheerio = parseHTML(body);
 
-    console.log(body);
+    console.log('parse chapter: ', url, body);
     const novelDataScript = loadedCheerio('script')
       .filter((idx, ele) => loadedCheerio(ele).text().indexOf('novel_id =') > 0)
       .text();
+    console.log('novel data script: ', novelDataScript);
     const novelData = this.extractJsConstants(novelDataScript);
-
-    console.log(novelData);
     const requestBody = JSON.stringify({
       novel_id: Number(novelData['novel_id']),
       source_id: Number(novelData['sourceId']),
       chapter_url: novelData['chapterUrl'],
       translator: 'AI Gemini 2 - Dịch từ tiếng Trung',
     });
-    console.log(novelDataScript, novelData, requestBody);
+    console.log('novel data: ', novelDataScript, novelData, requestBody);
 
     const chapterResponse = await fetchApi(
       'https://truyendichai.com/api/getChapterStream',
@@ -186,8 +182,7 @@ class TruyenDichAI implements Plugin.PagePlugin {
       },
     );
 
-    console.log(chapterResponse.status);
-
+    console.log('load chapter response status: ', chapterResponse.status);
     const chapterText = await chapterResponse.text();
     return chapterText;
   }
