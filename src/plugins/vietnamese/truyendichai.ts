@@ -7,7 +7,7 @@ class TruyenDichAI implements Plugin.PagePlugin {
   name = 'Truyện Dịch AI';
   icon = 'src/vi/truyendichai/icon.png';
   site = 'https://truyendichai.com';
-  version = '1.0.10';
+  version = '1.0.11';
 
   parseNovels(loadedCheerio: CheerioAPI) {
     const novels: Plugin.NovelItem[] = [];
@@ -184,7 +184,17 @@ class TruyenDichAI implements Plugin.PagePlugin {
 
     console.log('load chapter response status: ', chapterResponse.status);
     const chapterText = await chapterResponse.text();
-    return chapterText;
+    return this.convertToHtml(chapterText);
+  }
+
+  convertToHtml(text: string): string {
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    const withBreaks = escaped.replace(/\n/g, '<br>');
+    return `<div id="article">${withBreaks}</div>`;
   }
 
   extractJsConstants(text: string): Record<string, string> {
