@@ -1,19 +1,18 @@
 import { CheerioAPI, load as parseHTML } from 'cheerio';
 import { fetchApi } from '@libs/fetch';
 import { Plugin } from '@typings/plugin';
-import { NovelStatus } from '@libs/novelStatus';
 
 class TruyenDichAI implements Plugin.PagePlugin {
   id = 'truyendichai';
   name = 'Truyện Dịch AI';
   icon = 'src/vi/truyendichai/icon.png';
   site = 'https://truyendichai.com';
-  version = '1.0.0';
+  version = '1.0.9';
 
   parseNovels(loadedCheerio: CheerioAPI) {
     const novels: Plugin.NovelItem[] = [];
 
-    loadedCheerio('.media.py-4').each((idx, ele) => {
+    loadedCheerio('li.media').each((idx, ele) => {
       const novelName = loadedCheerio(ele).find('h2 > a').text();
       const novelCover = loadedCheerio(ele)
         .find('.nh-thumb img')
@@ -28,11 +27,19 @@ class TruyenDichAI implements Plugin.PagePlugin {
         });
       }
     });
-    novels.push({
-      name: loadedCheerio.text(),
-      cover: '123',
-      path: '/',
-    });
+
+    if (novels.length < 20) {
+      // add empty novel to fill the page
+      for (let i = novels.length; i < 20; i++) {
+        novels.push({
+          name: 'Truyện mới cập nhật',
+          cover: 'https://truyendichai.com/assets/images/no-cover.png',
+          path: '',
+        });
+      }
+    }
+
+    console.log(novels);
     return novels;
   }
 
@@ -56,6 +63,7 @@ class TruyenDichAI implements Plugin.PagePlugin {
     searchTerm: string,
     pageNo: number,
   ): Promise<Plugin.NovelItem[]> {
+    console.log('searching novels', searchTerm, pageNo);
     const searchUrl = `${this.site}/tim-truyen?keyword=${searchTerm}&page=${pageNo}`;
     const result = await fetchApi(searchUrl);
     const body = await result.text();
@@ -68,12 +76,28 @@ class TruyenDichAI implements Plugin.PagePlugin {
     novelPath: string,
   ): Promise<Plugin.SourceNovel & { totalPages: number }> {
     const url = this.site + novelPath;
+    console.log('novel url', url);
     const result = await fetchApi(url);
     const body = await result.text();
+    console.log(body);
     const loadedCheerio = parseHTML(body);
-    const soureName = loadedCheerio('#chapter-list .chap-list.tab-pane')
+
+    const cover = loadedCheerio('.main .nh-section .nh-thumb img')
       .first()
-      .attr('id');
+      .attr('src');
+    const name = loadedCheerio('.main .nh-section h1').first().text();
+    const status =
+      loadedCheerio('.main .nh-section .media-body')
+        .text()
+        .indexOf('Hoàn thành') > 0
+        ? 'Hoàn thành'
+        : 'Đang ra';
+    const summary = loadedCheerio('.main .nh-section .content').first().text();
+
+    const soureName = loadedCheerio('.chap-tab')
+      .first()
+      .attr('id')
+      ?.replace('tab-', '');
     const getChapterUrl = `${url}/tab_content/${soureName}`;
     console.log(getChapterUrl);
     const chapterResponse = await fetchApi(getChapterUrl);
@@ -88,14 +112,6 @@ class TruyenDichAI implements Plugin.PagePlugin {
         chapterNumber: idx + 1,
       });
     });
-
-    const cover = loadedCheerio('.media .nh-thumb img').first().attr('src');
-    const name = loadedCheerio('.media h1').text();
-    const status =
-      loadedCheerio('.media .media-body').text().indexOf('Hoàn thành') > 0
-        ? 'Hoàn thành'
-        : 'Đang ra';
-    const summary = loadedCheerio('main .content').first().text();
 
     const novel: Plugin.SourceNovel & { totalPages: number } = {
       path: novelPath,
@@ -143,9 +159,7 @@ class TruyenDichAI implements Plugin.PagePlugin {
 
     console.log(body);
     const novelDataScript = loadedCheerio('script')
-      .filter(
-        (idx, ele) => loadedCheerio(ele).text().indexOf('const novel_id =') > 0,
-      )
+      .filter((idx, ele) => loadedCheerio(ele).text().indexOf('novel_id =') > 0)
       .text();
     const novelData = this.extractJsConstants(novelDataScript);
 
@@ -180,7 +194,7 @@ class TruyenDichAI implements Plugin.PagePlugin {
 
   extractJsConstants(text: string): Record<string, string> {
     const result: Record<string, string> = {};
-    const regex = /const\s+(\w+)\s*=\s*(\d+|'[^']*'|"[^"]*");/g;
+    const regex = /const|var\s+(\w+)\s*=\s*(\d+|'[^']*'|"[^"]*");/g;
 
     let match: RegExpExecArray | null;
     while ((match = regex.exec(text)) !== null) {
