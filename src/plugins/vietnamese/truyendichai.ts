@@ -7,7 +7,7 @@ class TruyenDichAI implements Plugin.PagePlugin {
   name = 'Truyện Dịch AI';
   icon = 'src/vi/truyendichai/icon.png';
   site = 'https://truyendichai.com';
-  version = '1.0.11';
+  version = '1.0.12';
 
   parseNovels(loadedCheerio: CheerioAPI) {
     const novels: Plugin.NovelItem[] = [];
@@ -184,6 +184,11 @@ class TruyenDichAI implements Plugin.PagePlugin {
 
     console.log('load chapter response status: ', chapterResponse.status);
     const chapterText = await chapterResponse.text();
+    if (!chapterResponse.ok) {
+      throw new Error(
+        `Failed to load chapter: ${chapterResponse.statusText} - body: ${chapterText}`,
+      );
+    }
     return this.convertToHtml(chapterText);
   }
 
