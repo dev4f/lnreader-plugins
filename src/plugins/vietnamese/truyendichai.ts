@@ -7,7 +7,7 @@ class TruyenDichAI implements Plugin.PagePlugin {
   name = 'Truyện Dịch AI';
   icon = 'src/vi/truyendichai/icon.png';
   site = 'https://truyendichai.com';
-  version = '1.0.12';
+  version = '1.0.13';
 
   parseNovels(loadedCheerio: CheerioAPI) {
     const novels: Plugin.NovelItem[] = [];
@@ -173,8 +173,6 @@ class TruyenDichAI implements Plugin.PagePlugin {
       {
         headers: {
           'Content-Type': 'application/json',
-          'Cookie':
-            'access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Ilx1MjAwZWVkd2FyZC5lbHJpYzk2QFx1MjAwYmFvbC5jb20iLCJ1c2VyX2lkIjoyMTAsInVzZXJuYW1lIjoidXNlcl8yMDI1MDYwNjA0MjkxMSIsImF2YXRhcl9wYXRoIjpudWxsLCJleHAiOjE3NjQ4MTA1MzMsImdlbWluaV9rZXkiOiJBSXphU3lBTEJTM2k2MndHTDJmcGJ1TVIySFh5ejhTcnZWOTZhRm8ifQ.VyfwU4di8F3-x_HHECf2-LMnV6vcRsP-Es-CWf_FCAY',
         },
         referrer: url,
         body: requestBody,
